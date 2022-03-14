@@ -7,9 +7,21 @@ from rest_framework import status
 
 from django.contrib.auth.hashers import make_password
 # Models
-from .models import Project, Comment, Bug, FeatureRequest
+from .models import Project, Comment, Bug, FeatureRequest, UserProfile
 # Serializers
 from .serializers import *
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        token['username'] = user.username
+        return token
+
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
 
 @api_view(['GET'])
 def Home(request):
@@ -34,6 +46,7 @@ def getAllProject(request):
     return Response(serializer.data)
 
 @api_view(['GET'])
+@permission_classes(([IsAuthenticated]))
 def getAllBugs(request):
     bugs = Bug.objects.all()
     serializer = BugSerializer(bugs, many=True)
@@ -41,15 +54,19 @@ def getAllBugs(request):
 
 @api_view(['POST'])
 def getUserDetail(request):
-    id = request.data['id']
-    user = User.objects.get(id=id)
-    findProfile = UserProfile.objects.get(user=user)
-    serializer = UserProfileSerializer(findProfile, many=False)
-    return Response(serializer.data)
+    try:
+        id = request.data['id']
+        user = User.objects.get(id=id)
+        findProfile = UserProfile.objects.get(user=user)
+        serializer = UserProfileSerializer(findProfile, many=False)
+        return Response(serializer.data)
+    except:
+        return Response({"details": "user not found"}, status=status.HTTP_404_NOT_FOUND)
 
 # "startDate": "2022-03-11",
 # "endDate": "2022-03-11"
 @api_view(['POST'])
+@permission_classes(([IsAuthenticated]))
 def filterBugDateRange(request):
     startDate = request.data['startDate']
     endDate = request.data['endDate']
@@ -67,4 +84,4 @@ def getAllUserProfile(request):
         serializer = UserProfileSerializer(users, many=True)
         return Response(serializer.data)
     except:
-        return Response({'message': 'No user found'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'details': 'No user found'}, status=status.HTTP_404_NOT_FOUND)
