@@ -28,16 +28,32 @@ def Home(request):
     return Response({'message': 'Hello World'})
 
 
+# username, passowrd, email, signedAs, technology, linkedin, github
 @api_view(['POST'])
 def SignUp(request):
     data = request.data
-    print(data['password'])
     print(make_password(data['password']))
-    user = User.objects.create_user(username=data['username'], password=data['password'], email=data['email'])
-    profile = UserProfile.objects.create(signedAs=data['signedAs'], user=user, technology=data['technology'], linkedIn=data['linkedIn'], github=data['github'])
-    serializer = UserProfileSerializerWithToken(profile, many=False)
-    return Response(serializer.data)
-
+    username = data['username']
+    password = data['password']
+    email = data['email']
+    signedAs = data['signedAs']
+    technology = data['technology']
+    linkedIn = data['linkedIn']
+    github = data['github']
+    if (not username or not password or not email or not signedAs):
+        return Response({'message': 'Please fill all the fields'}, status=status.HTTP_400_BAD_REQUEST)
+    elif (User.objects.filter(username=username).exists()):
+        return Response({'message': 'Username already exists'}, status=status.HTTP_400_BAD_REQUEST)
+    elif (User.objects.filter(email=email).exists()):
+        return Response({'message': 'Email already exists'}, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        try:
+            user = User.objects.create_user(username=username, password=password, email=email)
+            profile = UserProfile.objects.create(signedAs=signedAs, user=user, technology=technology, linkedIn=linkedIn, github=github)
+            serializer = UserProfileSerializerWithToken(profile, many=False)
+            return Response(serializer.data)
+        except:
+            return Response({'message': 'Something went wrong'}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 def getAllProject(request):
