@@ -89,6 +89,10 @@ class UserProfile(models.Model):
     technology = models.CharField(max_length=200, null=True, blank=True)
     linkedIn = models.URLField(max_length=200, null=True, blank=True)
     github = models.URLField(max_length=200, null=True, blank=True)
+    bio = models.TextField(max_length=500, null=True, blank=True)
+    portfolio = models.URLField(max_length=200, null=True, blank=True)
+    country = models.CharField(max_length=200, null=True, blank=True)
+
 
 
     def __str__(self):

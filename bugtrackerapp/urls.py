@@ -12,4 +12,6 @@ urlpatterns = [
     path('findUser', views.getUserDetail, name='findUser'),
     path('users', views.getAllUserProfile, name='users'),
     path('filterBugDateRange', views.filterBugDateRange, name='filterBugDateRange'),
+    path('getuserdetail', views.getUserDetails, name='getuserdetail'),
+    path('addbug', views.addBug, name='addbug'),
 ]
