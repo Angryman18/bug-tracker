@@ -12,6 +12,8 @@ from .models import Project, Comment, Bug, FeatureRequest, UserProfile
 from .serializers import *
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
+import jwt
+from django.conf import settings
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
@@ -28,18 +30,35 @@ def Home(request):
     return Response({'message': 'Hello World'})
 
 
+# username, passowrd, email, signedAs, technology, linkedin, github
 @api_view(['POST'])
 def SignUp(request):
     data = request.data
-    print(data['password'])
     print(make_password(data['password']))
-    user = User.objects.create_user(username=data['username'], password=data['password'], email=data['email'])
-    profile = UserProfile.objects.create(signedAs=data['signedAs'], user=user, technology=data['technology'], linkedIn=data['linkedIn'], github=data['github'])
-    serializer = UserProfileSerializerWithToken(profile, many=False)
-    return Response(serializer.data)
-
+    username = data['username']
+    password = data['password']
+    email = data['email']
+    signedAs = data['signedAs']
+    technology = data['technology']
+    linkedIn = data['linkedIn']
+    github = data['github']
+    if (not username or not password or not email or not signedAs):
+        return Response({'message': 'Please fill all the fields'}, status=status.HTTP_400_BAD_REQUEST)
+    elif (User.objects.filter(username=username).exists()):
+        return Response({'message': 'Username already exists'}, status=status.HTTP_400_BAD_REQUEST)
+    elif (User.objects.filter(email=email).exists()):
+        return Response({'message': 'Email already exists'}, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        try:
+            user = User.objects.create_user(username=username, password=password, email=email)
+            profile = UserProfile.objects.create(signedAs=signedAs, user=user, technology=technology, linkedIn=linkedIn, github=github)
+            serializer = UserProfileSerializerWithToken(profile, many=False)
+            return Response(serializer.data)
+        except:
+            return Response({'message': 'Something went wrong'}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def getAllProject(request):
     projects = Project.objects.all()
     serializer = ProjectSerializer(projects, many=True)
@@ -72,6 +91,7 @@ def filterBugDateRange(request):
     endDate = request.data['endDate']
     startDate = datetime.strptime(startDate, '%Y-%m-%d')
     endDate = datetime.strptime(endDate, '%Y-%m-%d')
+    print(startDate, endDate)
     bugs = Bug.objects.filter(reportDate__range=[startDate, endDate])
     serializer = BugSerializer(bugs, many=True)
     return Response(serializer.data.__reversed__())
@@ -85,3 +105,39 @@ def getAllUserProfile(request):
         return Response(serializer.data)
     except:
         return Response({'details': 'No user found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def getUserDetails(request):
+    username = request.data['username']
+    try:
+        userobject = User.objects.get(username=username)
+        print('this is userobject', userobject)
+        userProfile = UserProfile.objects.get(user=userobject)
+        serializer = UserProfileSerializer(userProfile, many=False)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    except:
+        return Response({'details': 'No user found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def addBug(request):
+    try:
+        data = request.data
+        title = data['title']
+        description  = data['description']
+        priority = data['priority']
+        projectid = data['project']
+        reportdate = data['reportdate']
+        findProject = Project.objects.get(id=projectid)
+        secretkey = request.headers['authorization'][7:]
+        decoded = jwt.decode(secretkey, key=settings.SECRET_KEY, algorithms=['HS256'])
+        finduser = User.objects.get(id=decoded['user_id'])
+        createbug = Bug.objects.create(title=title, description=description, priority=priority, project=findProject, reportedBy=finduser, screenshot='', msg='', reportDate=reportdate)
+        serializer = BugSerializer(createbug, many=False)
+        return Response({'message': 'Bug added', 'data': serializer.data}, status=status.HTTP_200_OK)
+    except:
+        print('this is error')
+        return Response({'message': 'Something went wrong'}, status=status.HTTP_400_BAD_REQUEST)
