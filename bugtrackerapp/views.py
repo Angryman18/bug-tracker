@@ -141,3 +141,15 @@ def addBug(request):
     except:
         print('this is error')
         return Response({'message': 'Something went wrong'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def recentBugs(request):
+    try:
+        bugs = Bug.objects.all()
+        last5bugs = bugs[len(bugs)-5:len(bugs)]
+        serializer = BugSerializer(last5bugs, many=True)
+        return Response(serializer.data.__reversed__())
+    except:
+        return Response({'details': 'No bug found'}, status=status.HTTP_404_NOT_FOUND)

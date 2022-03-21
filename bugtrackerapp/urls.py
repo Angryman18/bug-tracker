@@ -14,4 +14,5 @@ urlpatterns = [
     path('filterBugDateRange', views.filterBugDateRange, name='filterBugDateRange'),
     path('getuserdetail', views.getUserDetails, name='getuserdetail'),
     path('addbug', views.addBug, name='addbug'),
+    path('recent-bugs', views.recentBugs, name='recent-bugs'),
 ]
