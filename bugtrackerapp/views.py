@@ -64,6 +64,26 @@ def getAllProject(request):
     serializer = ProjectSerializer(projects, many=True)
     return Response(serializer.data)
 
+
+@api_view(['POST'])
+def searchProject(request):
+    inputData = request.data['slug']
+    projects = Project.objects.all()
+    serializer = ProjectSerializer(projects, many=True)
+    def matchFunction(value):
+        inputArr = inputData.split(' ')
+        print('this is value', value)
+        finalData = list()
+        for x in inputArr:
+            if (x in value['projectName'] and x not in finalData):
+                finalData.append(x)
+            elif (x in value['description'] and x not in finalData):
+                finalData.append(x)
+        return finalData
+    finalData = list(filter(matchFunction, serializer.data))
+    return Response(finalData, status=status.HTTP_200_OK)
+
+
 @api_view(['GET'])
 @permission_classes(([IsAuthenticated]))
 def getAllBugs(request):

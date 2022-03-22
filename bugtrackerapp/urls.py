@@ -15,4 +15,5 @@ urlpatterns = [
     path('getuserdetail', views.getUserDetails, name='getuserdetail'),
     path('addbug', views.addBug, name='addbug'),
     path('recent-bugs', views.recentBugs, name='recent-bugs'),
+    path('search-project', views.searchProject, name='search-project'),
 ]
