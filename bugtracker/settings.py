@@ -167,7 +167,7 @@ STATIC_URL = 'static/'
 MEDIA_URL = '/media/'
 
 STATICFILE_DIRS = BASE_DIR / 'static'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = "/var/www/imsmahanta/static"
 
 MEDIA_ROOT = BASE_DIR / 'media'
 
