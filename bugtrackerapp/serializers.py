@@ -5,17 +5,18 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 
 
-class ProjectSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Project
-        fields = '__all__'
-        depth=1
-
 # NORMAL USER
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id','username', 'email', 'date_joined', 'last_login']
+
+class ProjectSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    class Meta:
+        model = Project
+        fields = '__all__'
+        depth=1
 
 # AUTHENTICATED USER
 class UserSerializerWithToken(UserSerializer):

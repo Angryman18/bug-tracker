@@ -57,12 +57,19 @@ def SignUp(request):
         except:
             return Response({'message': 'Something went wrong'}, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['GET'])
+@api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def getAllProject(request):
-    projects = Project.objects.all()
-    serializer = ProjectSerializer(projects, many=True)
-    return Response(serializer.data)
+    if request.method == 'POST':
+        page = request.data['page']
+        projects = Project.objects.all()[int(page)*1-1:int(page)*1]
+        serializer = ProjectSerializer(projects, many=True)
+        return Response(serializer.data)
+    elif request.method == 'GET':
+        projects = Project.objects.all()
+        serializer = ProjectSerializer(projects, many=True)
+        return Response(serializer.data)
+
 
 
 @api_view(['POST'])
