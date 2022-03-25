@@ -82,9 +82,11 @@ def searchProject(request):
         inputArr = inputData.lower().split(' ')
         finalData = list()
         for x in inputArr:
-            if (x in value['projectName'].lower() and x not in finalData):
+            name = value['projectName'].lower()
+            desc = value['description'].lower()
+            if ((x in name or x in ''.join(name.split(' '))) and x not in finalData):
                 finalData.append(x)
-            elif (x in value['description'].lower() and x not in finalData):
+            elif ((x in desc or x in ''.join(desc.split(' '))) and x not in finalData):
                 finalData.append(x)
         return finalData
     finalData = list(filter(matchFunction, serializer.data))
