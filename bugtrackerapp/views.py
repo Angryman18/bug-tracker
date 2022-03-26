@@ -62,13 +62,31 @@ def SignUp(request):
 def getAllProject(request):
     if request.method == 'POST':
         page = request.data['page']
-        projects = Project.objects.all()[int(page)*1-1:int(page)*1]
+        projects = Project.objects.all().order_by("-id")[int(page)*3-3:int(page)*3]
         serializer = ProjectSerializer(projects, many=True)
         return Response(serializer.data)
     elif request.method == 'GET':
         projects = Project.objects.all()
         serializer = ProjectSerializer(projects, many=True)
         return Response(serializer.data)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def addProject(request):
+    data = request.data
+    projectName = data['projectName']
+    description = data['description']
+    githubLink = data['githubLink']
+    liveSiteLink = data['liveSiteLink']
+    if (not projectName or not description or not githubLink or not liveSiteLink):
+        return Response({'message': 'Please fill all the fields'}, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        try:
+            project = Project.objects.create(projectName=projectName, description=description, githubLink=githubLink, liveSiteLink=liveSiteLink)
+            serializer = ProjectSerializer(project, many=False)
+            return Response(serializer.data)
+        except:
+            return Response({'message': 'Something went wrong'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 
@@ -80,16 +98,21 @@ def searchProject(request):
     serializer = ProjectSerializer(projects, many=True)
     def matchFunction(value):
         inputArr = inputData.lower().split(' ')
-        finalData = list()
         for x in inputArr:
             name = value['projectName'].lower()
             desc = value['description'].lower()
-            if ((x in name or x in ''.join(name.split(' '))) and x not in finalData):
-                finalData.append(x)
-            elif ((x in desc or x in ''.join(desc.split(' '))) and x not in finalData):
-                finalData.append(x)
-        return finalData
-    finalData = list(filter(matchFunction, serializer.data))
+            if (x in name or x in ''.join(name.split(' '))):
+                return {"priority": "title", "data": value}
+            elif (x in desc or x in ''.join(desc.split(' '))):
+                return {"priority": "desc", "data": value}
+            else:
+                return {"priority": "none", "data": None}
+    finalData = list()
+    for x in list(map(matchFunction, serializer.data)):
+        if x["priority"] == "title":
+            finalData.insert(0, x["data"])
+        elif x["priority"] == "desc":
+            finalData.append(x["data"])
     return Response(finalData, status=status.HTTP_200_OK)
 
 
