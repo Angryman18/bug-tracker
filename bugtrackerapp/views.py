@@ -68,7 +68,7 @@ def getAllProject(request):
     elif request.method == 'GET':
         projects = Project.objects.all()
         serializer = ProjectSerializer(projects, many=True)
-        return Response(serializer.data)
+        return Response(serializer.data.__reversed__())
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
