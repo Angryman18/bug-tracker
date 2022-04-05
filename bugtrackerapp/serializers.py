@@ -9,7 +9,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id','username', 'email', 'date_joined', 'last_login']
+        fields = ['id','username', 'email', 'date_joined']
 
 class ProjectSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
@@ -23,7 +23,7 @@ class UserSerializerWithToken(UserSerializer):
     token = serializers.SerializerMethodField(read_only=True)
     class Meta:
         model = User
-        fields = ['id','username', 'email', 'token','date_joined', 'last_login']
+        fields = ['id','username', 'email', 'token','date_joined']
 
     def get_token(self, obj):
         token = RefreshToken.for_user(obj)

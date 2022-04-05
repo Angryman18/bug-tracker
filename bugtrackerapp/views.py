@@ -15,6 +15,9 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 import jwt
 from django.conf import settings
 
+# helpers
+from .helper import getLoggedInUserDetail
+
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
@@ -184,9 +187,7 @@ def addBug(request):
         projectid = data['project']
         reportdate = data['reportdate']
         findProject = Project.objects.get(id=projectid)
-        secretkey = request.headers['authorization'][7:]
-        decoded = jwt.decode(secretkey, key=settings.SECRET_KEY, algorithms=['HS256'])
-        finduser = User.objects.get(id=decoded['user_id'])
+        finduser = getLoggedInUserDetail(request.headers)
         createbug = Bug.objects.create(title=title, description=description, priority=priority, project=findProject, reportedBy=finduser, screenshot='', msg='', reportDate=reportdate)
         serializer = BugSerializer(createbug, many=False)
         return Response({'message': 'Bug added', 'data': serializer.data}, status=status.HTTP_200_OK)
@@ -205,3 +206,38 @@ def recentBugs(request):
         return Response(serializer.data.__reversed__())
     except:
         return Response({'details': 'No bug found'}, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def getUserSpeceficContent(request):
+    try:
+        finduser = getLoggedInUserDetail(request.headers)
+        user_Serializer = UserSerializer(finduser, many=False)
+        getAllBugs = Bug.objects.all()
+        serializer = BugSerializer(getAllBugs, many=True)
+        getFilteredBugs = filter(lambda x: x['reportedBy']['id'] == user_Serializer.data['id'], serializer.data)
+        resp = {"data": list(getFilteredBugs)}
+        return Response(resp, status=status.HTTP_200_OK)
+    except:
+        return Response({'details': 'No bug found'}, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def updateBugs(request):
+    try:
+        msg = request.data['msg']
+        bug_status = request.data['status']
+        bugid = request.data['bugid']
+        user = getLoggedInUserDetail(request.headers)
+        profile = UserProfile.objects.get(user=user)
+        serializer = UserProfileSerializer(profile, many=False)
+        if (serializer.data['signedAs'] != 'Developer'):
+            return Response({'message': 'You are not authorized to update the bug'}, status=status.HTTP_401_UNAUTHORIZED)
+        bug = Bug.objects.get(id=bugid)
+        bug.msg = msg
+        bug.status = bug_status
+        bug.save()
+        return Response({'message': 'Bug updated'}, status=status.HTTP_200_OK)
+        
+    except:
+        return Response({'message': 'Sorry Something Error Occured'}, status=status.HTTP_404_NOT_FOUND)

@@ -17,4 +17,6 @@ urlpatterns = [
     path('recent-bugs', views.recentBugs, name='recent-bugs'),
     path('search-project', views.searchProject, name='search-project'),
     path('add-project', views.addProject, name='add-project'),
+    path('get-userspecefic-content', views.getUserSpeceficContent, name='get-user-bugs'),
+    path('update-bug', views.updateBugs, name='update-bug'),
 ]
