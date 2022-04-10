@@ -216,7 +216,7 @@ def getUserSpeceficContent(request):
         getAllBugs = Bug.objects.all()
         serializer = BugSerializer(getAllBugs, many=True)
         getFilteredBugs = filter(lambda x: x['reportedBy']['id'] == user_Serializer.data['id'], serializer.data)
-        resp = {"data": list(getFilteredBugs)}
+        resp = {"data": reversed(list(getFilteredBugs))}
         return Response(resp, status=status.HTTP_200_OK)
     except:
         return Response({'details': 'No bug found'}, status=status.HTTP_404_NOT_FOUND)
