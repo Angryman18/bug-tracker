@@ -16,7 +16,7 @@ import jwt
 from django.conf import settings
 
 # helpers
-from .helper import getLoggedInUserDetail
+from .helper import getLoggedInUserDetail, checkIfDeveloper
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
@@ -81,13 +81,17 @@ def addProject(request):
     description = data['description']
     githubLink = data['githubLink']
     liveSiteLink = data['liveSiteLink']
+    user = getLoggedInUserDetail(request.headers)
     if (not projectName or not description or not githubLink or not liveSiteLink):
         return Response({'message': 'Please fill all the fields'}, status=status.HTTP_400_BAD_REQUEST)
     else:
         try:
-            project = Project.objects.create(projectName=projectName, description=description, githubLink=githubLink, liveSiteLink=liveSiteLink)
-            serializer = ProjectSerializer(project, many=False)
-            return Response(serializer.data)
+            if (checkIfDeveloper(request.headers)):
+                project = Project.objects.create(user=user, projectName=projectName, description=description, githubLink=githubLink, liveSiteLink=liveSiteLink)
+                serializer = ProjectSerializer(project, many=False)
+                return Response(serializer.data)
+            else:
+                return Response({'message': 'This isnt a Developer Account. Only Developer can add Projects.'}, status=status.HTTP_400_BAD_REQUEST)
         except:
             return Response({'message': 'Something went wrong'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -201,9 +205,14 @@ def addBug(request):
 def recentBugs(request):
     try:
         bugs = Bug.objects.all()
-        last5bugs = bugs[len(bugs)-5:len(bugs)]
-        serializer = BugSerializer(last5bugs, many=True)
-        return Response(serializer.data.__reversed__())
+        if (len(bugs) > 5):
+            last5bugs = bugs[len(bugs)-5:len(bugs)]
+            serializer = BugSerializer(last5bugs, many=True)
+            return Response(serializer.data.__reversed__())
+        else:
+            last5bugs = bugs[0:len(bugs)]
+            serializer = BugSerializer(last5bugs, many=True)
+            return Response(serializer.data.__reversed__())
     except:
         return Response({'details': 'No bug found'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -213,9 +222,16 @@ def getUserSpeceficContent(request):
     try:
         finduser = getLoggedInUserDetail(request.headers)
         user_Serializer = UserSerializer(finduser, many=False)
+        userProfile = UserProfile.objects.get(user=finduser)
         getAllBugs = Bug.objects.all()
         serializer = BugSerializer(getAllBugs, many=True)
-        getFilteredBugs = filter(lambda x: x['reportedBy']['id'] == user_Serializer.data['id'], serializer.data)
+        print(checkIfDeveloper(request.headers))
+        getFilteredBugs = None
+        if (userProfile.signedAs == "Developer"):
+            print("this has execurete", serializer.data)
+            getFilteredBugs = filter(lambda x: x['project']['user']["id"] == user_Serializer.data['id'], serializer.data)
+        else:
+            getFilteredBugs = filter(lambda x: x['reportedBy']['id'] == user_Serializer.data['id'], serializer.data)
         resp = {"data": reversed(list(getFilteredBugs))}
         return Response(resp, status=status.HTTP_200_OK)
     except:

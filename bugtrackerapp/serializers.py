@@ -47,8 +47,9 @@ class UserProfileSerializerWithToken(serializers.ModelSerializer):
 
 class BugSerializer(serializers.ModelSerializer):
     reportedBy = UserSerializer(read_only=True)
+    project = ProjectSerializer(read_only=True)
     class Meta:
         model = Bug
         fields = ['id','title', 'description', 'priority', 'status', 'msg', 'reportDate', 'reportedBy', 'project']
-        depth=1
+        depth=2
 
