@@ -257,3 +257,28 @@ def updateBugs(request):
         
     except:
         return Response({'message': 'Sorry Something Error Occured'}, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['GET'])
+# @permission_classes([IsAuthenticated])
+def allFeatures(request):
+    try:
+        features = FeatureRequest.objects.all()
+        serializer = FeatureSerializer(features, many=True)
+        return Response(serializer.data)
+    except:
+        return Response({'details': 'No data found'}, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['POST'])
+def addFeatures(request):
+    try:
+        data = request.data
+        title = data['title']
+        description  = data['description']
+        project = data['project']
+        apealdate = data['apealdate']
+        getProject = Project.objects.get(id=project)
+        FeatureRequest.objects.create(title=title, description=description, project=getProject, apealDate=apealdate)
+        return Response({'message': 'Feature added'}, status=status.HTTP_200_OK)
+    except:
+        return Response({'details': 'Error Adding Feature'}, status=status.HTTP_404_NOT_FOUND)

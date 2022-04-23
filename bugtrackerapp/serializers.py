@@ -53,3 +53,7 @@ class BugSerializer(serializers.ModelSerializer):
         fields = ['id','title', 'description', 'priority', 'status', 'msg', 'reportDate', 'reportedBy', 'project']
         depth=2
 
+class FeatureSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FeatureRequest
+        fields = '__all__'
