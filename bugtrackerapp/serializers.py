@@ -1,3 +1,4 @@
+from dataclasses import field
 from rest_framework import serializers
 from .models import *
 from django.contrib.auth.models import User
@@ -53,3 +54,8 @@ class BugSerializer(serializers.ModelSerializer):
         fields = ['id','title', 'description', 'priority', 'status', 'msg', 'reportDate', 'reportedBy', 'project']
         depth=2
 
+class FeatureSerializer(serializers.ModelSerializer):
+    apealedBy = UserSerializer(read_only=True)
+    class Meta:
+        model = FeatureRequest
+        fields = '__all__'
