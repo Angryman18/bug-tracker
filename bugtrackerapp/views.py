@@ -225,7 +225,6 @@ def getUserSpeceficContent(request):
         userProfile = UserProfile.objects.get(user=finduser)
         getAllBugs = Bug.objects.all()
         serializer = BugSerializer(getAllBugs, many=True)
-        print(checkIfDeveloper(request.headers))
         getFilteredBugs = None
         if (userProfile.signedAs == "Developer"):
             print("this has execurete", serializer.data)
@@ -265,7 +264,7 @@ def allFeatures(request):
     try:
         features = FeatureRequest.objects.all()
         serializer = FeatureSerializer(features, many=True)
-        return Response(serializer.data)
+        return Response(serializer.data.__reversed__())
     except:
         return Response({'details': 'No data found'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -277,8 +276,9 @@ def addFeatures(request):
         description  = data['description']
         project = data['project']
         apealdate = data['apealdate']
-        getProject = Project.objects.get(id=project)
-        FeatureRequest.objects.create(title=title, description=description, project=getProject, apealDate=apealdate)
+        user = getLoggedInUserDetail(request.headers)
+        getProject = Project.objects.get(id=int(project))
+        FeatureRequest.objects.create(title=title, description=description, project=getProject, apealDate=apealdate, apealedBy=user)
         return Response({'message': 'Feature added'}, status=status.HTTP_200_OK)
     except:
         return Response({'details': 'Error Adding Feature'}, status=status.HTTP_404_NOT_FOUND)
