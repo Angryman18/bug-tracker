@@ -223,15 +223,19 @@ def getUserSpeceficContent(request):
         finduser = getLoggedInUserDetail(request.headers)
         user_Serializer = UserSerializer(finduser, many=False)
         userProfile = UserProfile.objects.get(user=finduser)
-        getAllBugs = Bug.objects.all()
-        serializer = BugSerializer(getAllBugs, many=True)
-        getFilteredBugs = None
+        bugSerializer = None
+        featureSerializer = None
         if (userProfile.signedAs == "Developer"):
-            print("this has execurete", serializer.data)
-            getFilteredBugs = filter(lambda x: x['project']['user']["id"] == user_Serializer.data['id'], serializer.data)
+            getAllBugs = Bug.objects.filter(project__user__id=user_Serializer.data["id"])
+            getAllFeatures = FeatureRequest.objects.filter(project__user__id=user_Serializer.data["id"])
+            featureSerializer = FeatureSerializer(getAllFeatures, many=True)
+            bugSerializer = BugSerializer(getAllBugs, many=True)
         else:
-            getFilteredBugs = filter(lambda x: x['reportedBy']['id'] == user_Serializer.data['id'], serializer.data)
-        resp = {"data": reversed(list(getFilteredBugs))}
+            getAllBugs = Bug.objects.filter(reportedBy__id=user_Serializer.data["id"])
+            getAllFeatures = FeatureRequest.objects.filter(apealedBy__id=user_Serializer.data["id"])
+            featureSerializer = FeatureSerializer(getAllFeatures, many=True)
+            bugSerializer = BugSerializer(getAllBugs, many=True)
+        resp = {"bugs": reversed(list(bugSerializer.data)), "features": reversed(list(featureSerializer.data))}
         return Response(resp, status=status.HTTP_200_OK)
     except:
         return Response({'details': 'No bug found'}, status=status.HTTP_404_NOT_FOUND)
