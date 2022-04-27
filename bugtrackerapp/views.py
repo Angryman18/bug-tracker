@@ -65,7 +65,7 @@ def SignUp(request):
 def getAllProject(request):
     if request.method == 'POST':
         page = request.data['page']
-        projects = Project.objects.all().order_by("-id")[int(page)*3-3:int(page)*3]
+        projects = Project.objects.all().order_by("-id")[int(page)*4-4:int(page)*4]
         serializer = ProjectSerializer(projects, many=True)
         return Response(serializer.data)
     elif request.method == 'GET':
@@ -226,16 +226,16 @@ def getUserSpeceficContent(request):
         bugSerializer = None
         featureSerializer = None
         if (userProfile.signedAs == "Developer"):
-            getAllBugs = Bug.objects.filter(project__user__id=user_Serializer.data["id"])
-            getAllFeatures = FeatureRequest.objects.filter(project__user__id=user_Serializer.data["id"])
+            getAllBugs = Bug.objects.filter(project__user__id=user_Serializer.data["id"]).order_by('-id')
+            getAllFeatures = FeatureRequest.objects.filter(project__user__id=user_Serializer.data["id"]).order_by('-id')
             featureSerializer = FeatureSerializer(getAllFeatures, many=True)
             bugSerializer = BugSerializer(getAllBugs, many=True)
         else:
-            getAllBugs = Bug.objects.filter(reportedBy__id=user_Serializer.data["id"])
-            getAllFeatures = FeatureRequest.objects.filter(apealedBy__id=user_Serializer.data["id"])
+            getAllBugs = Bug.objects.filter(reportedBy__id=user_Serializer.data["id"]).order_by('-id')
+            getAllFeatures = FeatureRequest.objects.filter(apealedBy__id=user_Serializer.data["id"]).order_by('-id')
             featureSerializer = FeatureSerializer(getAllFeatures, many=True)
             bugSerializer = BugSerializer(getAllBugs, many=True)
-        resp = {"bugs": reversed(list(bugSerializer.data)), "features": reversed(list(featureSerializer.data))}
+        resp = {"bugs": bugSerializer.data, "features": featureSerializer.data}
         return Response(resp, status=status.HTTP_200_OK)
     except:
         return Response({'details': 'No bug found'}, status=status.HTTP_404_NOT_FOUND)
@@ -256,14 +256,62 @@ def updateBugs(request):
         bug.msg = msg
         bug.status = bug_status
         bug.save()
-        return Response({'message': 'Bug updated'}, status=status.HTTP_200_OK)
-        
+        return Response({'message': 'Bug Updated Successfully!'}, status=status.HTTP_200_OK)   
     except:
         return Response({'message': 'Sorry Something Error Occured'}, status=status.HTTP_404_NOT_FOUND)
 
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def updateFeatures(request):
+    try:
+        user = getLoggedInUserDetail(request.headers)
+        msg = request.data['msg']
+        featureStatus = request.data['status']
+        id = request.data['id']
+        profile = UserProfile.objects.get(user=user)
+        if (profile.signedAs != 'Developer'):
+            return Response({'message': 'You are not authorized to update the feature'}, status=status.HTTP_401_UNAUTHORIZED)
+        feature = FeatureRequest.objects.get(id=id)
+        feature.msg = msg
+        feature.status = featureStatus
+        feature.save()
+        return Response({'message': 'Feature Updated Successfully!'}, status=status.HTTP_200_OK)
+    except:
+        return Response({'message': 'Sorry Something Error Occured'}, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def deleteFeature(request):
+    try:
+        id = request.data['id']
+        user = getLoggedInUserDetail(request.headers)
+        profile = UserProfile.objects.get(user=user)
+        if (profile.signedAs != 'Developer'):
+            return Response({'message': 'You are not authorized to delete the feature'}, status=status.HTTP_401_UNAUTHORIZED)
+        feature = FeatureRequest.objects.get(id=id)
+        feature.delete()
+        return Response({'message': 'Feature Deleted Successfully!'}, status=status.HTTP_200_OK)
+    except:
+        return Response({'message': 'Sorry Something Error Occured'}, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def deleteBug(request):
+    try:
+        id = request.data['id']
+        user = getLoggedInUserDetail(request.headers)
+        profile = UserProfile.objects.get(user=user)
+        if (profile.signedAs != 'Developer'):
+            return Response({'message': 'You are not authorized to delete the bug'}, status=status.HTTP_401_UNAUTHORIZED)
+        bug = Bug.objects.get(id=id)
+        bug.delete()
+        return Response({'message': 'Bug Deleted Successfully!'}, status=status.HTTP_200_OK)
+    except:
+        return Response({'message': 'Sorry Something Error Occured'}, status=status.HTTP_404_NOT_FOUND)
+
 @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated])
 def allFeatures(request):
     try:
         features = FeatureRequest.objects.all()
@@ -273,6 +321,7 @@ def allFeatures(request):
         return Response({'details': 'No data found'}, status=status.HTTP_404_NOT_FOUND)
 
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def addFeatures(request):
     try:
         data = request.data

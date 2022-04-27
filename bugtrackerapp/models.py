@@ -68,6 +68,7 @@ class FeatureRequest(models.Model):
     )
     project = models.ForeignKey(Project, on_delete=models.CASCADE, null=True, blank=True)
     apealedBy = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    msg = models.CharField(max_length=200, null=True, blank=True)
     title = models.CharField(max_length=200, null=True, blank=True)
     description = models.TextField(max_length=500, null=True, blank=True)
     apealDate = models.DateField(auto_now_add=True, null=True, blank=True)

@@ -56,6 +56,7 @@ class BugSerializer(serializers.ModelSerializer):
 
 class FeatureSerializer(serializers.ModelSerializer):
     apealedBy = UserSerializer(read_only=True)
+    project = ProjectSerializer(read_only=True)
     class Meta:
         model = FeatureRequest
         fields = '__all__'
