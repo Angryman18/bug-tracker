@@ -8,6 +8,7 @@ from rest_framework import status
 from django.contrib.auth.hashers import make_password
 # Models
 from .models import Project, Comment, Bug, FeatureRequest, UserProfile
+from django.db.models import Q
 # Serializers
 from .serializers import *
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -226,8 +227,8 @@ def getUserSpeceficContent(request):
         bugSerializer = None
         featureSerializer = None
         if (userProfile.signedAs == "Developer"):
-            getAllBugs = Bug.objects.filter(project__user__id=user_Serializer.data["id"]).order_by('-id')
-            getAllFeatures = FeatureRequest.objects.filter(project__user__id=user_Serializer.data["id"]).order_by('-id')
+            getAllBugs = Bug.objects.filter(Q(project__user__id=user_Serializer.data["id"]) | Q(reportedBy__id=user_Serializer.data["id"])).order_by('-id')
+            getAllFeatures = FeatureRequest.objects.filter(Q(project__user__id=user_Serializer.data["id"]) | Q(apealedBy__id=user_Serializer.data["id"])).order_by('-id')
             featureSerializer = FeatureSerializer(getAllFeatures, many=True)
             bugSerializer = BugSerializer(getAllBugs, many=True)
         else:
@@ -247,16 +248,20 @@ def updateBugs(request):
         msg = request.data['msg']
         bug_status = request.data['status']
         bugid = request.data['bugid']
-        user = getLoggedInUserDetail(request.headers)
-        profile = UserProfile.objects.get(user=user)
-        serializer = UserProfileSerializer(profile, many=False)
-        if (serializer.data['signedAs'] != 'Developer'):
+        findBug = Bug.objects.get(id=bugid)
+        ownerId = findBug.get_project_user_id() # get user id of the project owner
+        user = getLoggedInUserDetail(request.headers) # get logged in user
+        print(user.id, ownerId)
+        profile = UserProfile.objects.get(user=user) # get logged in user profile
+        if (profile.signedAs != 'Developer'):
             return Response({'message': 'You are not authorized to update the bug'}, status=status.HTTP_401_UNAUTHORIZED)
-        bug = Bug.objects.get(id=bugid)
-        bug.msg = msg
-        bug.status = bug_status
-        bug.save()
-        return Response({'message': 'Bug Updated Successfully!'}, status=status.HTTP_200_OK)   
+        elif (ownerId != user.id):
+            return Response({'message': 'You are not Owner of the Project'}, status=status.HTTP_401_UNAUTHORIZED)
+        else:
+            findBug.msg = msg
+            findBug.status = bug_status
+            findBug.save()
+            return Response({'message': 'Bug Updated Successfully!'}, status=status.HTTP_200_OK)   
     except:
         return Response({'message': 'Sorry Something Error Occured'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -269,14 +274,18 @@ def updateFeatures(request):
         msg = request.data['msg']
         featureStatus = request.data['status']
         id = request.data['id']
+        findFeature = FeatureRequest.objects.get(id=id)
+        findOwner = findFeature.get_project_user_id()
         profile = UserProfile.objects.get(user=user)
         if (profile.signedAs != 'Developer'):
             return Response({'message': 'You are not authorized to update the feature'}, status=status.HTTP_401_UNAUTHORIZED)
-        feature = FeatureRequest.objects.get(id=id)
-        feature.msg = msg
-        feature.status = featureStatus
-        feature.save()
-        return Response({'message': 'Feature Updated Successfully!'}, status=status.HTTP_200_OK)
+        elif (findOwner != user.id):
+            return Response({'message': 'You are not Owner of the Project'}, status=status.HTTP_401_UNAUTHORIZED)
+        else:
+            findFeature.msg = msg
+            findFeature.status = featureStatus
+            findFeature.save()
+            return Response({'message': 'Feature Updated Successfully!'}, status=status.HTTP_200_OK)
     except:
         return Response({'message': 'Sorry Something Error Occured'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -335,3 +344,45 @@ def addFeatures(request):
         return Response({'message': 'Feature added'}, status=status.HTTP_200_OK)
     except:
         return Response({'details': 'Error Adding Feature'}, status=status.HTTP_404_NOT_FOUND)
+
+# COMMETNS API
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def commentOnProject(request):
+    try:
+        user = getLoggedInUserDetail(request.headers)
+        profile = UserProfile.objects.get(user=user)
+        comment = request.data['comment']
+        projectId = request.data['projectId']
+        project = Project.objects.get(id=int(projectId))
+        Comment.objects.create(user=profile, comment=comment, project=project, commentDate=datetime.now())
+        return Response({'message': 'Comment is added'}, status=status.HTTP_200_OK)
+    except:
+        return Response({'details': 'Error Adding Comment'}, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def getProjectBasedComments(request, projectId):
+    try:
+        getAllComments = Comment.objects.filter(project__id=projectId).order_by('-id')
+        serializer = CommentSerializer(getAllComments, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    except:
+        return Response({'details': 'No Comment Added'}, status=status.HTTP_404_NOT_FOUND)
+
+# LIKES API
+@api_view(['POST'])
+def addLikeOnProject(request):
+    try:
+        projectId = request.data['projectId']
+        user = getLoggedInUserDetail(request.headers)
+        findProject = Project.objects.get(id=int(projectId))
+        if (findProject.likes.filter(id=user.id).exists()):
+            findProject.likes.remove(user)
+            return Response({'message': 'Disliked'}, status=status.HTTP_200_OK)
+        findProject.likes.add(user)
+        totalLike = findProject.total_likes()
+        return Response({'message': 'Liked'}, status=status.HTTP_200_OK)
+    except:
+        pass

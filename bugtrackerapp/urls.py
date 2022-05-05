@@ -24,4 +24,9 @@ urlpatterns = [
     path('deleteBug', views.deleteBug, name='deleteBug'),
     path('allfeatures', views.allFeatures, name='allfeatures'),
     path('add-feature', views.addFeatures, name='add-features'),
+
+    path('add-comment-on-project', views.commentOnProject, name='add-comment'),
+    path('get-projects-comments/<int:projectId>', views.getProjectBasedComments, name='get-projects-comments'),
+
+    path("add-like", views.addLikeOnProject, name="add-like"),
 ]

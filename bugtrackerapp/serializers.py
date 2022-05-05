@@ -14,6 +14,11 @@ class UserSerializer(serializers.ModelSerializer):
 
 class ProjectSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
+    likes = serializers.SerializerMethodField(read_only=True)
+
+    def get_likes(self, obj):
+        return obj.likes.count()
+
     class Meta:
         model = Project
         fields = '__all__'
@@ -59,4 +64,20 @@ class FeatureSerializer(serializers.ModelSerializer):
     project = ProjectSerializer(read_only=True)
     class Meta:
         model = FeatureRequest
+        fields = '__all__'
+
+# COMMENTS SECTION
+
+class CommentUserProfileSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    class Meta:
+        model = UserProfile
+        fields = ['id','user', 'signedAs']
+        depth=1
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    user = CommentUserProfileSerializer(read_only=True)
+    class Meta:
+        model = Comment
         fields = '__all__'
