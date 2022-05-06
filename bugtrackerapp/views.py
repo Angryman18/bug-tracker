@@ -251,7 +251,6 @@ def updateBugs(request):
         findBug = Bug.objects.get(id=bugid)
         ownerId = findBug.get_project_user_id() # get user id of the project owner
         user = getLoggedInUserDetail(request.headers) # get logged in user
-        print(user.id, ownerId)
         profile = UserProfile.objects.get(user=user) # get logged in user profile
         if (profile.signedAs != 'Developer'):
             return Response({'message': 'You are not authorized to update the bug'}, status=status.HTTP_401_UNAUTHORIZED)
@@ -373,6 +372,7 @@ def getProjectBasedComments(request, projectId):
 
 # LIKES API
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def addLikeOnProject(request):
     try:
         projectId = request.data['projectId']
@@ -386,3 +386,32 @@ def addLikeOnProject(request):
         return Response({'message': 'Liked'}, status=status.HTTP_200_OK)
     except:
         pass
+
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def editProfile(request):
+    try:
+        data = request.data
+        technology = data['technology']
+        github = data['github']
+        linkedin = data['linkedIn']
+        bio = data['bio']
+        country = data['country']
+        portfolio = data['portfolio']
+        avatar = data['avatar']
+        user = getLoggedInUserDetail(request.headers)
+        print(user)
+        profile = UserProfile.objects.get(user=user)
+        profile.technology = technology
+        profile.github = github
+        profile.linkedIn = linkedin
+        profile.bio = bio
+        profile.country = country
+        profile.portfolio = portfolio
+        profile.avatar = avatar
+        profile.save()
+        profileSerializer = UserProfileSerializer(profile, many=False)
+        return Response(profileSerializer.data, status=status.HTTP_200_OK)
+    except:
+        return Response({'message': 'Sorry Something Error Occured'}, status=status.HTTP_404_NOT_FOUND)

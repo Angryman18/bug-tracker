@@ -99,7 +99,7 @@ class UserProfile(models.Model):
 
 
     def __str__(self):
-        return self.signedAs
+        return f'{self.signedAs} - {str(self.user)}'
 
 class Comment(models.Model):
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, null=True, blank=True)

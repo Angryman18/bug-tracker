@@ -29,4 +29,6 @@ urlpatterns = [
     path('get-projects-comments/<int:projectId>', views.getProjectBasedComments, name='get-projects-comments'),
 
     path("add-like", views.addLikeOnProject, name="add-like"),
+
+    path('editProfile', views.editProfile, name='editProfile'),
 ]
