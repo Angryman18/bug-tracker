@@ -14,6 +14,11 @@ class UserSerializer(serializers.ModelSerializer):
 
 class ProjectSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
+    likes = serializers.SerializerMethodField(read_only=True)
+
+    def get_likes(self, obj):
+        return obj.likes.count()
+
     class Meta:
         model = Project
         fields = '__all__'
@@ -35,7 +40,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     class Meta:
         model = UserProfile
-        fields = ['id','user', 'avatar', 'signedAs', 'technology', 'linkedIn','github', 'bio', 'portfolio', 'country']
+        fields = ['id','user', 'avatar', 'path', 'signedAs', 'technology', 'linkedIn','github', 'bio', 'portfolio', 'country']
         depth=1
 
 # get logged in user profile with access token
@@ -43,7 +48,7 @@ class UserProfileSerializerWithToken(serializers.ModelSerializer):
     user = UserSerializerWithToken(read_only=True)
     class Meta:
         model = UserProfile
-        fields = ['id','user', 'avatar', 'signedAs', 'technology', 'linkedIn','github','bio', 'portfolio', 'country']
+        fields = ['id','user', 'avatar', 'path', 'signedAs', 'technology', 'linkedIn','github','bio', 'portfolio', 'country']
         depth=1
 
 class BugSerializer(serializers.ModelSerializer):
@@ -56,6 +61,23 @@ class BugSerializer(serializers.ModelSerializer):
 
 class FeatureSerializer(serializers.ModelSerializer):
     apealedBy = UserSerializer(read_only=True)
+    project = ProjectSerializer(read_only=True)
     class Meta:
         model = FeatureRequest
+        fields = '__all__'
+
+# COMMENTS SECTION
+
+class CommentUserProfileSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    class Meta:
+        model = UserProfile
+        fields = ['id','user', 'signedAs', 'avatar']
+        depth=1
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    user = CommentUserProfileSerializer(read_only=True)
+    class Meta:
+        model = Comment
         fields = '__all__'
