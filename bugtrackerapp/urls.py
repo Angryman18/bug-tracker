@@ -31,4 +31,6 @@ urlpatterns = [
     path("add-like", views.addLikeOnProject, name="add-like"),
 
     path('editProfile', views.editProfile, name='editProfile'),
+
+    path('getDashboardStats', views.getDashboardStats, name='getDashboardStats'),
 ]

@@ -1,4 +1,5 @@
 from pickle import NONE
+from pyexpat import model
 from secrets import choice
 from tokenize import triple_quoted
 from django.db import models
@@ -87,7 +88,8 @@ class UserProfile(models.Model):
         ('User', 'User')
     )
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
-    avatar = models.ImageField(upload_to='avatar', null=True, blank=True)
+    avatar = models.URLField(max_length=500, null=True, blank=True)
+    path = models.CharField(max_length=200, null=True, blank=True)
     signedAs = models.CharField(max_length=200, choices=ROLE, default='User', null=True, blank=True)
     technology = models.CharField(max_length=200, null=True, blank=True)
     linkedIn = models.URLField(max_length=200, null=True, blank=True)

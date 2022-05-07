@@ -388,7 +388,7 @@ def addLikeOnProject(request):
         pass
 
 
-@api_view(['PUT'])
+@api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def editProfile(request):
     try:
@@ -399,9 +399,9 @@ def editProfile(request):
         bio = data['bio']
         country = data['country']
         portfolio = data['portfolio']
-        avatar = data['avatar']
+        avatar = data.get('avatar')
+        path = data.get('path')
         user = getLoggedInUserDetail(request.headers)
-        print(user)
         profile = UserProfile.objects.get(user=user)
         profile.technology = technology
         profile.github = github
@@ -409,9 +409,45 @@ def editProfile(request):
         profile.bio = bio
         profile.country = country
         profile.portfolio = portfolio
-        profile.avatar = avatar
+        if (avatar != None and path != None):
+            profile.avatar = avatar
+            profile.path = path
         profile.save()
         profileSerializer = UserProfileSerializer(profile, many=False)
         return Response(profileSerializer.data, status=status.HTTP_200_OK)
+    except:
+        return Response({'message': 'Sorry Something Error Occured'}, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def getDashboardStats(request):
+    try:
+        user = getLoggedInUserDetail(request.headers)
+        totDev = UserProfile.objects.filter(signedAs="Developer")
+        totUsr = UserProfile.objects.filter(signedAs="User")
+        totTst = UserProfile.objects.filter(signedAs="Tester")
+
+        totBug = Bug.objects.all().count()
+        totProject = Project.objects.all().count()
+        totFeat = FeatureRequest.objects.all().count()
+        totCom = Comment.objects.all().count()
+
+        resolveBug = Bug.objects.filter(status="Resolved").count()
+        pendingBug = Bug.objects.filter(status="Pending").count()
+        rejectBug = Bug.objects.filter(status="Rejected").count()
+        inProgressBug = Bug.objects.filter(status="In Progress").count()
+
+        Unverified = FeatureRequest.objects.filter(status="Unverified").count()
+        pendingFeat = FeatureRequest.objects.filter(status="in Talk").count()
+        rejectFeat = FeatureRequest.objects.filter(status="Rejected").count()
+        acceptedFeature = FeatureRequest.objects.filter(status="Accepted").count()
+
+        userData = {'totalDev': totDev.count(), 'totalUsr': totUsr.count(), 'totalTst': totTst.count()}
+        dataStats = {'totalBug': totBug, "totalProjects": totProject, 'totalFeat': totFeat, 'totalCom': totCom}
+        bugData = {'totalBug': totBug, 'resolveBug': resolveBug, 'pendingBug': pendingBug, 'rejectBug': rejectBug, 'inProgressBug': inProgressBug}
+        featData = {'totalFeat': totFeat, 'Unverified': Unverified, 'inTalkFeature': pendingFeat, "AcceptedFeature": acceptedFeature, 'rejectFeat': rejectFeat}
+
+        return Response({"userData": userData, "data_stats": dataStats, "bugData": bugData, "featData": featData}, status=status.HTTP_200_OK)
     except:
         return Response({'message': 'Sorry Something Error Occured'}, status=status.HTTP_404_NOT_FOUND)

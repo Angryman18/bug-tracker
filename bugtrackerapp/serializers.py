@@ -40,7 +40,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     class Meta:
         model = UserProfile
-        fields = ['id','user', 'avatar', 'signedAs', 'technology', 'linkedIn','github', 'bio', 'portfolio', 'country']
+        fields = ['id','user', 'avatar', 'path', 'signedAs', 'technology', 'linkedIn','github', 'bio', 'portfolio', 'country']
         depth=1
 
 # get logged in user profile with access token
@@ -48,7 +48,7 @@ class UserProfileSerializerWithToken(serializers.ModelSerializer):
     user = UserSerializerWithToken(read_only=True)
     class Meta:
         model = UserProfile
-        fields = ['id','user', 'avatar', 'signedAs', 'technology', 'linkedIn','github','bio', 'portfolio', 'country']
+        fields = ['id','user', 'avatar', 'path', 'signedAs', 'technology', 'linkedIn','github','bio', 'portfolio', 'country']
         depth=1
 
 class BugSerializer(serializers.ModelSerializer):
@@ -72,7 +72,7 @@ class CommentUserProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     class Meta:
         model = UserProfile
-        fields = ['id','user', 'signedAs']
+        fields = ['id','user', 'signedAs', 'avatar']
         depth=1
 
 
